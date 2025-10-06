@@ -1,0 +1,26 @@
+{
+  "name": "bullpawn-contracts",
+  "version": "1.0.0",
+  "description": "Smart contracts for BullPawn - zkSync pawn system",
+  "main": "index.js",
+  "scripts": {
+    "build": "hardhat compile",
+    "deploy": "hardhat run scripts/deploy.ts --network zkSyncTestnet",
+    "dev": "hardhat node",
+    "test": "hardhat test"
+  },
+  "devDependencies": {
+    "@matterlabs/hardhat-zksync": "^0.3.0",
+    "@matterlabs/hardhat-zksync-solc": "^0.3.0",
+    "@matterlabs/zksync-contracts": "^0.3.0",
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "dotenv": "^16.0.0",
+    "hardhat": "^2.17.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@chainlink/contracts": "^1.5.0",
+    "@openzeppelin/contracts": "^4.6.0"
+  }
+}

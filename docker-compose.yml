@@ -1,0 +1,63 @@
+services:
+  # Smart Contracts
+  contracts:
+    build:
+      context: ./contracts
+      dockerfile: Dockerfile
+    volumes:
+      - ./contracts:/app
+      - /app/node_modules
+    working_dir: /app
+    command: npm run dev
+    networks:
+      - zksync-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "9001:9001"
+    environment:
+      - NODE_ENV=development
+      - PORT=9001
+      - ZKSYNC_RPC_URL=https://sepolia.era.zksync.dev
+      - PRIVATE_KEY=${PRIVATE_KEY}
+      - USDT_CONTRACT_ADDRESS=${USDT_CONTRACT_ADDRESS}
+      - PAWN_CONTRACT_ADDRESS=${PAWN_CONTRACT_ADDRESS}
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    working_dir: /app
+    command: npm run dev
+    depends_on:
+      - contracts
+    networks:
+      - zksync-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_BACKEND_URL=http://localhost:9001
+      - REACT_APP_ZKSYNC_RPC_URL=https://sepolia.era.zksync.dev
+      - REACT_APP_PAWN_CONTRACT_ADDRESS=${PAWN_CONTRACT_ADDRESS}
+      - REACT_APP_USDT_CONTRACT_ADDRESS=${USDT_CONTRACT_ADDRESS}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    working_dir: /app
+    command: npm run dev
+    depends_on:
+      - backend
+    networks:
+      - zksync-network
+
+networks:
+  zksync-network:
+    driver: bridge
