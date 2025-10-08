@@ -9,15 +9,15 @@ RUN npm install
 # Copy source code
 COPY . .
 
+# Copy and make startup script executable
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh && ls -la /app/start.sh
+
 # Build the application
 RUN npm run build
 
 # Install serve to serve static files
 RUN npm install -g serve
-
-# Copy startup script
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
 
 # Expose port
 EXPOSE 3000

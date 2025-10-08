@@ -2,7 +2,13 @@
 {{- if .Values.ingress.enabled }}
 {{- range $host := .Values.ingress.hosts }}
   {{- range .paths }}
+  {{- if $host.host }}
   http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- else }}
+  # Get the LoadBalancer address for ingress
+  export INGRESS_IP=$(kubectl get ingress {{ include "bullpawn.fullname" . }} --namespace {{ .Release.Namespace }} -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+  echo http://$INGRESS_IP{{ .path }}
+  {{- end }}
   {{- end }}
 {{- end }}
 {{- else if contains "NodePort" .Values.service.type }}
