@@ -253,11 +253,17 @@ jobs:
         run: |
           cd deploy/helm
 
-      - name: Deploy sealed secrets
+      - name: Deploy secrets
         run: |
-          for file in ./sealed-secrets/production/sealed-*.yaml; do
-            kubectl apply -f "$file"
-          done
+          echo "Checking for secret files..."
+          ls -la ./sealed-secrets/production/ || echo "No sealed-secrets directory found"
+          if [ -f "./sealed-secrets/production/sealed-backend-secret.yaml" ]; then
+            echo "Applying sealed-backend-secret.yaml..."
+            kubectl apply -f ./sealed-secrets/production/sealed-backend-secret.yaml
+          else
+            echo "No secret files found, creating namespace and continuing..."
+            kubectl create namespace bullpawn-production --dry-run=client -o yaml | kubectl apply -f -
+          fi
 
       - name: Run helmfile apply for production
         run: |
