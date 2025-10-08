@@ -22,11 +22,28 @@ jobs:
       id-token: write
       contents: read
     
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: backend
+            dockerfile: Dockerfile
+            build-context: ./backend
+            ecr-repo: bullpawn-dev-backend
+          - name: frontend
+            dockerfile: Dockerfile
+            build-context: ./frontend
+            ecr-repo: bullpawn-dev-frontend
+          - name: contracts
+            dockerfile: Dockerfile
+            build-context: ./contracts
+            ecr-repo: bullpawn-dev-contracts
+    
     outputs:
-      backend-image: ${{ steps.backend-meta.outputs.tags }}
-      frontend-image: ${{ steps.frontend-meta.outputs.tags }}
-      contracts-image: ${{ steps.contracts-meta.outputs.tags }}
-      tag: ${{ steps.tag.outputs.tag }}
+      backend-image: ${{ steps.set-outputs.outputs.backend-image }}
+      frontend-image: ${{ steps.set-outputs.outputs.frontend-image }}
+      contracts-image: ${{ steps.set-outputs.outputs.contracts-image }}
+      tag: ${{ steps.set-outputs.outputs.tag }}
     
     steps:
     - name: Checkout code
@@ -42,81 +59,71 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
 
-    - name: Set environment
+    - name: Set environment and tag
       id: set-env
       run: |
         if [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
           echo "ENVIRONMENT=development" >> $GITHUB_ENV
+          echo "IMAGE_TAG=develop-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
+        elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          echo "ENVIRONMENT=production" >> $GITHUB_ENV
+          echo "IMAGE_TAG=main-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
         else
-          echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+          echo "ENVIRONMENT=development" >> $GITHUB_ENV
+          echo "IMAGE_TAG=pr-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
         fi
 
-    # Backend Docker build and push
-    - name: Docker meta for backend
-      id: backend-meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ${{ env.ECR_REGISTRY }}/bullpawn-dev-backend
-        tags: |
-          type=sha,event=pr
-          type=sha,event=branch
-          type=semver,pattern={{version}}
-          type=raw,value=latest,enable={{is_default_branch}}
-
-    - name: Build and push backend image
-      uses: docker/build-push-action@v5
-      with:
-        context: ./backend
-        push: true
-        tags: ${{ steps.backend-meta.outputs.tags }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-
-    # Frontend Docker build and push
-    - name: Docker meta for frontend
-      id: frontend-meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ${{ env.ECR_REGISTRY }}/bullpawn-dev-frontend
-        tags: |
-          type=sha,event=pr
-          type=sha,event=branch
-          type=semver,pattern={{version}}
-          type=raw,value=latest,enable={{is_default_branch}}
-
-    - name: Build and push frontend image
-      uses: docker/build-push-action@v5
-      with:
-        context: ./frontend
-        push: true
-        tags: ${{ steps.frontend-meta.outputs.tags }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-
-    # Contracts Docker build and push
-    - name: Docker meta for contracts
-      id: contracts-meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ${{ env.ECR_REGISTRY }}/bullpawn-dev-contracts
-        tags: |
-          type=sha,event=pr
-          type=sha,event=branch
-          type=semver,pattern={{version}}
-          type=raw,value=latest,enable={{is_default_branch}}
-
-    - name: Build and push contracts image
-      uses: docker/build-push-action@v5
-      with:
-        context: ./contracts
-        push: true
-        tags: ${{ steps.contracts-meta.outputs.tags }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-
-    - id: tag
+    - name: Build, tag, and push ${{ matrix.service.name }} image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ env.IMAGE_TAG }}
+        ECR_REPOSITORY: ${{ matrix.service.ecr-repo }}
+        DOCKERFILE: ${{ matrix.service.dockerfile }}
+        BUILD_CONTEXT: ${{ matrix.service.build-context }}
       run: |
-        echo "tag=${{ fromJSON(steps.backend-meta.outputs.json).labels['org.opencontainers.image.version'] }}" >> $GITHUB_OUTPUT
+        echo "Building ${{ matrix.service.name }} image..."
+        echo "Dockerfile: $DOCKERFILE"
+        echo "Build context: $BUILD_CONTEXT"
+        echo "ECR Repository: $ECR_REPOSITORY"
+        echo "Image Tag: $IMAGE_TAG"
+        
+        # Verify dockerfile exists
+        if [ ! -f "$DOCKERFILE" ]; then
+          echo "❌ Dockerfile not found: $DOCKERFILE"
+          ls -la
+          exit 1
+        fi
+        
+        # Build the image
+        echo "Starting Docker build..."
+        if ! docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f $DOCKERFILE $BUILD_CONTEXT; then
+          echo "❌ Docker build failed for ${{ matrix.service.name }}"
+          exit 1
+        fi
+        
+        echo "Pushing image to ECR..."
+        if ! docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG; then
+          echo "❌ Failed to push ${{ matrix.service.name }} image to ECR"
+          exit 1
+        fi
+        
+        echo "Tagging and pushing latest..."
+        docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        if ! docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest; then
+          echo "❌ Failed to push ${{ matrix.service.name }} latest tag to ECR"
+          exit 1
+        fi
+        
+        echo "✅ ${{ matrix.service.name }} image pushed with both tags: $IMAGE_TAG and latest"
+
+    - name: Set outputs
+      id: set-outputs
+      if: matrix.service.name == 'backend'
+      run: |
+        echo "backend-image=${{ steps.login-ecr.outputs.registry }}/bullpawn-dev-backend:${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
+        echo "frontend-image=${{ steps.login-ecr.outputs.registry }}/bullpawn-dev-frontend:${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
+        echo "contracts-image=${{ steps.login-ecr.outputs.registry }}/bullpawn-dev-contracts:${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
+        echo "tag=${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
 
   # deploy-development:
   #   runs-on: ubuntu-latest
