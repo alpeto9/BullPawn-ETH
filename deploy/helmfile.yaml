@@ -20,14 +20,14 @@ repositories:
 ---
 releases:
   - name: backend
-    chart: ./helm/bullpawn
+    chart: ./bullpawn
     version: 0.1.0
     values:
       - environments/common/backend.yaml.gotmpl
       - environments/{{ .Environment.Name }}/backend.yaml.gotmpl
       - environments/{{ .Environment.Name }}/common-environment-variables.yaml.gotmpl
   - name: frontend
-    chart: ./helm/bullpawn
+    chart: ./bullpawn
     version: 0.1.0
     values:
       - environments/common/frontend.yaml.gotmpl
@@ -36,7 +36,7 @@ releases:
     needs:
       - backend
   - name: contracts
-    chart: ./helm/bullpawn
+    chart: ./bullpawn
     version: 0.1.0
     values:
       - environments/common/contracts.yaml.gotmpl
