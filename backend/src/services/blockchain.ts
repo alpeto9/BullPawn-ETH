@@ -1,8 +1,8 @@
 import { Provider, Wallet, Contract, utils } from 'zksync-web3';
 import { ethers } from 'ethers';
-import PawnSystemABI from '../abis/PawnSystem.json';
-import MockUSDTABI from '../abis/MockUSDT.json';
-import ChainlinkPriceFeedABI from '../abis/ChainlinkPriceFeed.json';
+const PawnSystemABI = require('../abis/PawnSystem.json');
+const MockUSDTABI = require('../abis/MockUSDT.json');
+const ChainlinkPriceFeedABI = require('../abis/ChainlinkPriceFeed.json').abi;
 
 export class BlockchainService {
   private provider: Provider;
