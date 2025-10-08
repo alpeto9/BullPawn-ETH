@@ -40,9 +40,6 @@ jobs:
             ecr-repo: bullpawn-dev-contracts
     
     outputs:
-      backend-image: ${{ steps.set-outputs.outputs.backend-image }}
-      frontend-image: ${{ steps.set-outputs.outputs.frontend-image }}
-      contracts-image: ${{ steps.set-outputs.outputs.contracts-image }}
       tag: ${{ steps.set-outputs.outputs.tag }}
     
     steps:
@@ -120,9 +117,6 @@ jobs:
       id: set-outputs
       if: matrix.service.name == 'backend'
       run: |
-        echo "backend-image=${{ steps.login-ecr.outputs.registry }}/bullpawn-dev-backend:${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
-        echo "frontend-image=${{ steps.login-ecr.outputs.registry }}/bullpawn-dev-frontend:${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
-        echo "contracts-image=${{ steps.login-ecr.outputs.registry }}/bullpawn-dev-contracts:${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
         echo "tag=${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
 
   # deploy-development:
@@ -259,7 +253,11 @@ jobs:
       - name: Run helmfile apply for production
         run: |
           cd deploy/helm
-          INPUT_VALUES="--state-values-set=backend.image.repository=${{ needs.build-and-push.outputs.backend-image }} --state-values-set=frontend.image.repository=${{ needs.build-and-push.outputs.frontend-image }} --state-values-set=contracts.image.repository=${{ needs.build-and-push.outputs.contracts-image }}"
+          # Get the ECR registry URL from AWS
+          ECR_REGISTRY=$(aws sts get-caller-identity --query Account --output text).dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+          echo "ECR Registry: $ECR_REGISTRY"
+          
+          INPUT_VALUES="--state-values-set=backend.image.repository=$ECR_REGISTRY/bullpawn-dev-backend --state-values-set=backend.image.tag=${{ needs.build-and-push.outputs.tag }} --state-values-set=frontend.image.repository=$ECR_REGISTRY/bullpawn-dev-frontend --state-values-set=frontend.image.tag=${{ needs.build-and-push.outputs.tag }} --state-values-set=contracts.image.repository=$ECR_REGISTRY/bullpawn-dev-contracts --state-values-set=contracts.image.tag=${{ needs.build-and-push.outputs.tag }}"
           echo "Running helmfile from directory: $(pwd)"
           echo "Helmfile command: helmfile --environment production --namespace bullpawn-production $INPUT_VALUES apply --wait"
           helmfile --environment production --namespace bullpawn-production $INPUT_VALUES apply --wait
