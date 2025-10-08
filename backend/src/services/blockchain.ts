@@ -103,9 +103,9 @@ export class BlockchainService {
       const receipt = await tx.wait();
       console.log('USDT minted successfully');
       return receipt.transactionHash;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error minting USDT:', error);
-      throw new Error(`Failed to mint USDT: ${error.message}`);
+      throw new Error(`Failed to mint USDT: ${error?.message || 'Unknown error'}`);
     }
   }
 
@@ -131,10 +131,10 @@ export class BlockchainService {
       };
     } catch (error: any) {
       console.error('Error creating pawn:', error);
-      console.error('Error details:', error.message);
-      console.error('Error code:', error.code);
-      console.error('Error reason:', error.reason);
-      throw new Error(`Failed to create pawn position: ${error.message}`);
+      console.error('Error details:', error?.message);
+      console.error('Error code:', error?.code);
+      console.error('Error reason:', error?.reason);
+      throw new Error(`Failed to create pawn position: ${error?.message || 'Unknown error'}`);
     }
   }
 
@@ -162,8 +162,8 @@ export class BlockchainService {
           if (newBalance.lt(requiredAmount)) {
             throw new Error(`Still insufficient USDT balance after minting. Have: ${ethers.utils.formatUnits(newBalance, 6)}, Need: ${usdtAmount}`);
           }
-        } catch (mintError) {
-          throw new Error(`Insufficient USDT balance and failed to mint: ${mintError.message}`);
+        } catch (mintError: any) {
+          throw new Error(`Insufficient USDT balance and failed to mint: ${mintError?.message || 'Unknown error'}`);
         }
       }
       
@@ -183,9 +183,9 @@ export class BlockchainService {
       console.log('Pawn redemption successful');
 
       return receipt.transactionHash;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error redeeming pawn:', error);
-      throw new Error(`Failed to redeem pawn position: ${error.message}`);
+      throw new Error(`Failed to redeem pawn position: ${error?.message || 'Unknown error'}`);
     }
   }
 
