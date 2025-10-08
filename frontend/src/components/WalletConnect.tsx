@@ -4,7 +4,7 @@ import { AccountBalanceWallet, Logout, CheckCircle } from '@mui/icons-material';
 import { useWeb3 } from '../contexts/Web3Context';
 
 const WalletConnect: React.FC = () => {
-  const { account, isConnected, connectWallet, disconnectWallet } = useWeb3();
+  const { account, isConnected, connectWallet, disconnectWallet, selectedWallet, availableWallets } = useWeb3();
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -26,6 +26,21 @@ const WalletConnect: React.FC = () => {
             }
           }}
         />
+        {selectedWallet && (
+          <Chip
+            label={selectedWallet}
+            sx={{
+              background: 'rgba(120, 119, 198, 0.2)',
+              border: '1px solid rgba(120, 119, 198, 0.3)',
+              color: '#7877C6',
+              fontWeight: 600,
+              fontSize: '0.75rem',
+              '& .MuiChip-label': {
+                px: 2
+              }
+            }}
+          />
+        )}
         <Chip
           avatar={
             <Avatar sx={{ 
@@ -97,7 +112,10 @@ const WalletConnect: React.FC = () => {
         transition: 'all 0.3s ease',
       }}
     >
-      Connect Wallet
+      {availableWallets.length > 0 
+        ? `Connect ${availableWallets[0]}${availableWallets.length > 1 ? ` (+${availableWallets.length - 1} more)` : ''}`
+        : 'Connect Wallet'
+      }
     </Button>
   );
 };

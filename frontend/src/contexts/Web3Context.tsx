@@ -10,6 +10,8 @@ interface Web3ContextType {
   connectWallet: () => Promise<void>;
   disconnectWallet: () => void;
   signer: ethers.Signer | null;
+  availableWallets: string[];
+  selectedWallet: string | null;
 }
 
 const Web3Context = createContext<Web3ContextType | undefined>(undefined);
@@ -32,44 +34,117 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
   const [zkProvider, setZkProvider] = useState<Provider | null>(null);
   const [signer, setSigner] = useState<ethers.Signer | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [availableWallets, setAvailableWallets] = useState<string[]>([]);
+  const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
+
+  // Function to detect available wallets
+  const detectWallets = () => {
+    const wallets: string[] = [];
+    
+    // Check for MetaMask
+    if (window.ethereum?.isMetaMask) {
+      wallets.push('MetaMask');
+    }
+    
+    // Check for other common wallets
+    if (window.ethereum?.isCoinbaseWallet) {
+      wallets.push('Coinbase Wallet');
+    }
+    
+    if (window.ethereum?.isRabby) {
+      wallets.push('Rabby');
+    }
+    
+    if (window.ethereum?.isBraveWallet) {
+      wallets.push('Brave Wallet');
+    }
+    
+    // If no specific wallet detected but ethereum exists, assume generic
+    if (window.ethereum && wallets.length === 0) {
+      wallets.push('Web3 Wallet');
+    }
+    
+    setAvailableWallets(wallets);
+    return wallets;
+  };
+
+  // Function to get the ethereum provider safely
+  const getEthereumProvider = () => {
+    if (typeof window === 'undefined') return null;
+    
+    // Try to access ethereum safely
+    try {
+      return window.ethereum;
+    } catch (error) {
+      console.warn('Error accessing window.ethereum:', error);
+      return null;
+    }
+  };
 
   const connectWallet = async () => {
     try {
-      if (typeof window.ethereum !== 'undefined') {
-        const accounts = await window.ethereum.request({
-          method: 'eth_requestAccounts',
+      const ethereum = getEthereumProvider();
+      
+      if (!ethereum) {
+        alert('Please install MetaMask or another Web3 wallet');
+        return;
+      }
+
+      // Detect available wallets first
+      detectWallets();
+
+      const accounts = await ethereum.request({
+        method: 'eth_requestAccounts',
+      });
+
+      if (accounts.length > 0) {
+        const web3Provider = new ethers.providers.Web3Provider(ethereum);
+        const zkSyncProvider = new Provider(process.env.REACT_APP_ZKSYNC_RPC_URL || 'https://sepolia.era.zksync.dev');
+        
+        setAccount(accounts[0]);
+        setProvider(web3Provider);
+        setZkProvider(zkSyncProvider);
+        setSigner(web3Provider.getSigner());
+        setIsConnected(true);
+
+        // Set selected wallet
+        if (ethereum.isMetaMask) {
+          setSelectedWallet('MetaMask');
+        } else if (ethereum.isCoinbaseWallet) {
+          setSelectedWallet('Coinbase Wallet');
+        } else if (ethereum.isRabby) {
+          setSelectedWallet('Rabby');
+        } else if (ethereum.isBraveWallet) {
+          setSelectedWallet('Brave Wallet');
+        } else {
+          setSelectedWallet('Web3 Wallet');
+        }
+
+        // Listen for account changes
+        ethereum.on('accountsChanged', (newAccounts: string[]) => {
+          if (newAccounts.length > 0) {
+            setAccount(newAccounts[0]);
+          } else {
+            disconnectWallet();
+          }
         });
 
-        if (accounts.length > 0) {
-          const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
-          const zkSyncProvider = new Provider(process.env.REACT_APP_ZKSYNC_RPC_URL || 'https://sepolia.era.zksync.dev');
-          
-          setAccount(accounts[0]);
-          setProvider(web3Provider);
-          setZkProvider(zkSyncProvider);
-          setSigner(web3Provider.getSigner());
-          setIsConnected(true);
-
-          // Listen for account changes
-          window.ethereum.on('accountsChanged', (newAccounts: string[]) => {
-            if (newAccounts.length > 0) {
-              setAccount(newAccounts[0]);
-            } else {
-              disconnectWallet();
-            }
-          });
-
-          // Listen for network changes
-          window.ethereum.on('chainChanged', () => {
-            window.location.reload();
-          });
-        }
-      } else {
-        alert('Please install MetaMask or another Web3 wallet');
+        // Listen for network changes
+        ethereum.on('chainChanged', () => {
+          window.location.reload();
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error connecting wallet:', error);
-      alert('Failed to connect wallet');
+      
+      // Handle specific error cases
+      if (error.code === 4001) {
+        alert('Connection rejected by user');
+      } else if (error.code === -32002) {
+        alert('Connection request already pending. Please check your wallet.');
+      } else {
+        alert(`Failed to connect wallet: ${error.message || 'Unknown error'}`);
+      }
     }
   };
 
@@ -79,19 +154,25 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
     setZkProvider(null);
     setSigner(null);
     setIsConnected(false);
+    setSelectedWallet(null);
   };
 
   useEffect(() => {
     // Check if wallet is already connected
     const checkConnection = async () => {
-      if (typeof window.ethereum !== 'undefined') {
+      const ethereum = getEthereumProvider();
+      
+      if (ethereum) {
         try {
-          const accounts = await window.ethereum.request({
+          // Detect available wallets
+          detectWallets();
+          
+          const accounts = await ethereum.request({
             method: 'eth_accounts',
           });
 
           if (accounts.length > 0) {
-            const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
+            const web3Provider = new ethers.providers.Web3Provider(ethereum);
             const zkSyncProvider = new Provider(process.env.REACT_APP_ZKSYNC_RPC_URL || 'https://sepolia.era.zksync.dev');
             
             setAccount(accounts[0]);
@@ -99,6 +180,19 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
             setZkProvider(zkSyncProvider);
             setSigner(web3Provider.getSigner());
             setIsConnected(true);
+
+            // Set selected wallet
+            if (ethereum.isMetaMask) {
+              setSelectedWallet('MetaMask');
+            } else if (ethereum.isCoinbaseWallet) {
+              setSelectedWallet('Coinbase Wallet');
+            } else if (ethereum.isRabby) {
+              setSelectedWallet('Rabby');
+            } else if (ethereum.isBraveWallet) {
+              setSelectedWallet('Brave Wallet');
+            } else {
+              setSelectedWallet('Web3 Wallet');
+            }
           }
         } catch (error) {
           console.error('Error checking wallet connection:', error);
@@ -117,6 +211,8 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
     connectWallet,
     disconnectWallet,
     signer,
+    availableWallets,
+    selectedWallet,
   };
 
   return (
