@@ -18,7 +18,6 @@ ingress:
     nginx.ingress.kubernetes.io/limit-rps: "20"
     nginx.ingress.kubernetes.io/limit-connections: "100"
     nginx.ingress.kubernetes.io/limit-burst: "50"
-    nginx.ingress.kubernetes.io/rewrite-target: /
   hosts:
     - host: ""  # No specific host - will work with LoadBalancer IP/URL
       paths:
