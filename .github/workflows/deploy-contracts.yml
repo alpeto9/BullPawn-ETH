@@ -52,15 +52,15 @@ jobs:
     - name: Extract contract addresses
       id: extract-addresses
       run: |
-        # This would need to be implemented to extract addresses from deployment output
-        # For now, we'll use a placeholder that should be updated manually
-        echo "PAWN_CONTRACT_ADDRESS=0x1234567890123456789012345678901234567890" >> $GITHUB_OUTPUT
-        echo "MULTI_ORACLE_ADDRESS=0x1234567890123456789012345678901234567890" >> $GITHUB_OUTPUT
-        echo "ETH_PRICE_FEED_ADDRESS=0x1234567890123456789012345678901234567890" >> $GITHUB_OUTPUT
-        echo "BTC_PRICE_FEED_ADDRESS=0x1234567890123456789012345678901234567890" >> $GITHUB_OUTPUT
-
-    - name: Update deployment configuration
-      run: |
-        # Update the Helm values with actual contract addresses
-        # This would update the environment files with real addresses
-        echo "Contract addresses extracted and ready for application deployment"
+        cd contracts
+        # Extract addresses from the deployment artifacts
+        PAWN_ADDRESS=$(jq -r '.address' artifacts-zk/PawnContract.json)
+        ORACLE_ADDRESS=$(jq -r '.address' artifacts-zk/MultiOracle.json)
+        ETH_FEED_ADDRESS=$(jq -r '.address' artifacts-zk/ETHPriceFeed.json)
+        BTC_FEED_ADDRESS=$(jq -r '.address' artifacts-zk/BTCPriceFeed.json)
+        
+        # Set outputs for use in subsequent steps
+        echo "PAWN_CONTRACT_ADDRESS=${PAWN_ADDRESS}" >> $GITHUB_OUTPUT
+        echo "MULTI_ORACLE_ADDRESS=${ORACLE_ADDRESS}" >> $GITHUB_OUTPUT
+        echo "ETH_PRICE_FEED_ADDRESS=${ETH_FEED_ADDRESS}" >> $GITHUB_OUTPUT
+        echo "BTC_PRICE_FEED_ADDRESS=${BTC_FEED_ADDRESS}" >> $GITHUB_OUTPUT
