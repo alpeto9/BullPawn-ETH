@@ -35,10 +35,3 @@ releases:
       - environments/{{ .Environment.Name }}/common-environment-variables.yaml.gotmpl
     needs:
       - backend
-  - name: contracts
-    chart: ./bullpawn
-    version: 0.1.0
-    values:
-      - environments/common/contracts.yaml.gotmpl
-      - environments/{{ .Environment.Name }}/contracts.yaml.gotmpl
-      - environments/{{ .Environment.Name }}/common-environment-variables.yaml.gotmpl
