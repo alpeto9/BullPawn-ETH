@@ -65,7 +65,7 @@ async function simulateUser(userId) {
         // Wait for transaction to be mined
         await new Promise(resolve => setTimeout(resolve, 5000));
         
-        // Try to redeem the pawn (this might fail if not enough USDT, but that's ok)
+        // Try to redeem the pawn (will auto-mint USDT if needed)
         try {
           const redeemResponse = await axios.post(`${BACKEND_URL}/api/pawn/redeem`, {
             positionId: createResponse.data.positionId,
@@ -73,7 +73,7 @@ async function simulateUser(userId) {
           });
           console.log(`✅ User ${userId} - Redeemed pawn: ${redeemResponse.data.txHash}`);
         } catch (redeemError) {
-          console.log(`⚠️  User ${userId} - Could not redeem pawn (expected): ${redeemError.response?.data?.error || redeemError.message}`);
+          console.log(`❌ User ${userId} - Could not redeem pawn: ${redeemError.response?.data?.error || redeemError.message}`);
         }
       } else {
         console.log(`❌ User ${userId} - Failed to create pawn: ${createResponse.data.error || 'Unknown error'}`);

@@ -107,6 +107,20 @@ router.get('/user/:address', async (req: Request, res: Response) => {
   }
 });
 
+// Mint USDT from faucet
+router.post('/mint-usdt', async (req: Request, res: Response) => {
+  try {
+    const txHash = await blockchainService.mintUSDT();
+    res.json({ txHash, message: 'USDT minted successfully' });
+  } catch (error: any) {
+    console.error('Error minting USDT:', error);
+    res.status(500).json({ 
+      error: 'Failed to mint USDT',
+      details: error.message || 'Unknown error'
+    });
+  }
+});
+
 // Check if position should be liquidated
 router.get('/liquidate/:positionId/check', async (req: Request, res: Response) => {
   try {

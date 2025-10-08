@@ -92,6 +92,23 @@ export class BlockchainService {
     }
   }
 
+  async mintUSDT(): Promise<string> {
+    if (!this.usdtContract) {
+      throw new Error('USDT contract not initialized');
+    }
+    
+    try {
+      console.log('Minting USDT from faucet...');
+      const tx = await this.usdtContract.faucet();
+      const receipt = await tx.wait();
+      console.log('USDT minted successfully');
+      return receipt.transactionHash;
+    } catch (error) {
+      console.error('Error minting USDT:', error);
+      throw new Error(`Failed to mint USDT: ${error.message}`);
+    }
+  }
+
   async createPawn(ethAmount: string): Promise<{ txHash: string; positionId: number }> {
     if (!this.pawnContract) {
       throw new Error('Pawn contract not deployed yet. Please deploy contracts first.');
@@ -135,7 +152,19 @@ export class BlockchainService {
       console.log(`USDT Balance: ${ethers.utils.formatUnits(usdtBalance, 6)}, Required: ${usdtAmount}`);
       
       if (usdtBalance.lt(requiredAmount)) {
-        throw new Error(`Insufficient USDT balance. Have: ${ethers.utils.formatUnits(usdtBalance, 6)}, Need: ${usdtAmount}`);
+        console.log('Insufficient USDT balance, attempting to mint from faucet...');
+        try {
+          await this.mintUSDT();
+          // Check balance again after minting
+          const newBalance = await this.usdtContract.balanceOf(this.wallet!.address);
+          console.log(`New USDT balance after minting: ${ethers.utils.formatUnits(newBalance, 6)}`);
+          
+          if (newBalance.lt(requiredAmount)) {
+            throw new Error(`Still insufficient USDT balance after minting. Have: ${ethers.utils.formatUnits(newBalance, 6)}, Need: ${usdtAmount}`);
+          }
+        } catch (mintError) {
+          throw new Error(`Insufficient USDT balance and failed to mint: ${mintError.message}`);
+        }
       }
       
       // First approve USDT spending
