@@ -42,7 +42,7 @@ const MyPositions: React.FC = () => {
   const [positions, setPositions] = useState<Position[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [redeemDialog, setRedeemDialog] = useState<{ open: boolean; positionId: number | null }>({
+  const [redeemDialog, setRedeemDialog] = useState<{ open: boolean; positionId: number | null; usdtAmount?: string }>({
     open: false,
     positionId: null,
   });
@@ -124,7 +124,7 @@ const MyPositions: React.FC = () => {
   };
 
   const closeRedeemDialog = () => {
-    setRedeemDialog({ open: false, positionId: null });
+    setRedeemDialog({ open: false, positionId: null, usdtAmount: undefined });
     setRedeemAmount('');
     setRedeemResult(null);
   };
@@ -203,7 +203,7 @@ const MyPositions: React.FC = () => {
                         size="small"
                         startIcon={<Redeem />}
                         onClick={() => {
-                          setRedeemDialog({ open: true, positionId: index + 1 });
+                          setRedeemDialog({ open: true, positionId: position.positionId, usdtAmount: position.usdtAmount });
                           setRedeemAmount(getRepaymentAmount(position.usdtAmount));
                         }}
                         sx={{ borderColor: '#4caf50', color: '#4caf50' }}
@@ -243,6 +243,12 @@ const MyPositions: React.FC = () => {
               />
               <Alert severity="info" sx={{ mt: 2 }}>
                 You need to repay 110% of the original loan amount to recover your ETH.
+                {redeemDialog.usdtAmount && (
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    Original loan: {redeemDialog.usdtAmount} USDT<br/>
+                    Required repayment: {getRepaymentAmount(redeemDialog.usdtAmount)} USDT
+                  </Typography>
+                )}
               </Alert>
             </>
           ) : (
