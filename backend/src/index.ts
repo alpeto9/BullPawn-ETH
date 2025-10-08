@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import { pawnRoutes } from './routes/pawn';
 import metricsRoutes from './routes/metrics';
 import { errorHandler } from './middleware/errorHandler';
+import { MetricsService } from './services/metrics';
 
 dotenv.config();
 
@@ -52,4 +53,13 @@ app.use('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Backend server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  
+  // Update active pawns count from blockchain every 30 seconds
+  setInterval(async () => {
+    try {
+      await MetricsService.updateActivePawnsFromBlockchain();
+    } catch (error) {
+      console.error('Error updating active pawns from blockchain:', error);
+    }
+  }, 30000); // 30 seconds
 });

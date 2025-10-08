@@ -60,8 +60,22 @@ export class MetricsService {
   }
 
   static async getActivePawnsCount(): Promise<number> {
+    // Get the current value from the gauge
     const metric = await activePawnsGauge.get();
     return metric.values[0]?.value || 0;
+  }
+
+  static async updateActivePawnsFromBlockchain(): Promise<void> {
+    try {
+      // Import here to avoid circular dependency
+      const { BlockchainService } = await import('./blockchain');
+      const blockchainService = new BlockchainService();
+      const realCount = await blockchainService.getActivePawnsCount();
+      activePawnsGauge.set(realCount);
+      console.log('Updated active pawns from blockchain:', realCount);
+    } catch (error) {
+      console.error('Error updating active pawns from blockchain:', error);
+    }
   }
 
   static startPawnCreationTimer() {

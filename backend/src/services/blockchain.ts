@@ -73,6 +73,25 @@ export class BlockchainService {
     }
   }
 
+  async getActivePawnsCount(): Promise<number> {
+    if (!this.pawnContract) {
+      throw new Error('Pawn contract not initialized');
+    }
+    
+    try {
+      // Get the total number of pawns created
+      const totalPawns = await this.pawnContract.getTotalPawns();
+      console.log('Total pawns from contract:', totalPawns.toString());
+      
+      // For now, we'll use total pawns as active pawns
+      // In a real implementation, you'd need to track which ones are redeemed
+      return parseInt(totalPawns.toString());
+    } catch (error) {
+      console.error('Error fetching active pawns count:', error);
+      return 0;
+    }
+  }
+
   async createPawn(ethAmount: string): Promise<{ txHash: string; positionId: number }> {
     if (!this.pawnContract) {
       throw new Error('Pawn contract not deployed yet. Please deploy contracts first.');

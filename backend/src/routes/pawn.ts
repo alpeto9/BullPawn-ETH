@@ -94,6 +94,9 @@ router.get('/user/:address', async (req: Request, res: Response) => {
     const { address } = req.params;
     const positions = await blockchainService.getUserPositions(address);
     
+    // Update active pawns count from blockchain when getting positions
+    await MetricsService.updateActivePawnsFromBlockchain();
+    
     res.json({ positions });
   } catch (error) {
     res.status(500).json({ error: 'Failed to get user positions' });
