@@ -28,9 +28,8 @@ router.post('/create', validateCreatePawn, async (req: Request, res: Response) =
     MetricsService.incrementPawnCreations('success');
     MetricsService.incrementBlockchainTransactions('create', 'success');
     
-    // Update active pawns count (increment by 1)
-    const currentActivePawns = await MetricsService.getActivePawnsCount();
-    MetricsService.setActivePawns(currentActivePawns + 1);
+    // Update active pawns count from blockchain
+    await MetricsService.updateActivePawnsFromBlockchain();
     
     res.json(result);
   } catch (error: any) {
@@ -52,9 +51,8 @@ router.post('/redeem', validateRedeemPawn, async (req: Request, res: Response) =
     MetricsService.incrementPawnRedemptions('success');
     MetricsService.incrementBlockchainTransactions('redeem', 'success');
     
-    // Update active pawns count (decrement by 1)
-    const currentActivePawns = await MetricsService.getActivePawnsCount();
-    MetricsService.setActivePawns(Math.max(0, currentActivePawns - 1));
+    // Update active pawns count from blockchain
+    await MetricsService.updateActivePawnsFromBlockchain();
     
     res.json({ txHash });
   } catch (error: any) {
@@ -75,6 +73,10 @@ router.post('/liquidate/:positionId', async (req: Request, res: Response) => {
   try {
     const { positionId } = req.params;
     const txHash = await blockchainService.liquidatePawn(parseInt(positionId));
+    
+    // Update active pawns count from blockchain
+    await MetricsService.updateActivePawnsFromBlockchain();
+    
     res.json({ txHash });
   } catch (error) {
     res.status(500).json({ error: 'Failed to liquidate pawn position' });
