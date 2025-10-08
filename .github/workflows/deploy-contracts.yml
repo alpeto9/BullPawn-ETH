@@ -47,7 +47,7 @@ jobs:
         CHAINLINK_BTC_USD: "0x95Bc57e794aeb02E4a16eff406147f3ce2531F83"
       run: |
         cd contracts
-        npm run deploy:production
+        npm run deploy
 
     - name: Extract contract addresses
       id: extract-addresses
