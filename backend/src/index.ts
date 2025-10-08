@@ -30,10 +30,10 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/pawn', pawnRoutes);
-app.use('/metrics', metricsRoutes);
+app.use('/api/metrics', metricsRoutes);
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/api/health', (req, res) => {
   res.status(200).json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
