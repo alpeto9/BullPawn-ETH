@@ -59,15 +59,20 @@ jobs:
     - name: Set environment and tag
       id: set-env
       run: |
+        # Get commit date (year and day of year)
+        COMMIT_DATE=$(git log -1 --format=%cd --date=format:%Y%j ${{ github.sha }})
+        # Get short commit hash
+        COMMIT_HASH=$(echo ${{ github.sha }} | cut -c1-8)
+        
         if [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
           echo "ENVIRONMENT=development" >> $GITHUB_ENV
-          echo "IMAGE_TAG=develop-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
+          echo "IMAGE_TAG=develop-${COMMIT_DATE}-${COMMIT_HASH}" >> $GITHUB_ENV
         elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
           echo "ENVIRONMENT=production" >> $GITHUB_ENV
-          echo "IMAGE_TAG=main-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
+          echo "IMAGE_TAG=prod-${COMMIT_DATE}-${COMMIT_HASH}" >> $GITHUB_ENV
         else
           echo "ENVIRONMENT=development" >> $GITHUB_ENV
-          echo "IMAGE_TAG=pr-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
+          echo "IMAGE_TAG=pr-${COMMIT_DATE}-${COMMIT_HASH}" >> $GITHUB_ENV
         fi
 
     - name: Build, tag, and push ${{ matrix.service.name }} image
