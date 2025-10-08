@@ -1,12 +1,8 @@
 # Production backend overrides
-serviceMonitor:
-  enabled: true
-  labels:
-    release: kube-prometheus-stack
 
 autoscaling:
   enabled: true
-  minReplicas: 3
+  minReplicas: 1
   maxReplicas: 10
   targetCPUUtilizationPercentage: 70
   targetMemoryUtilizationPercentage: 70
