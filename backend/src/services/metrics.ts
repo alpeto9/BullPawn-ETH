@@ -59,6 +59,10 @@ export class MetricsService {
     activePawnsGauge.set(count);
   }
 
+  static getActivePawnsCount(): number {
+    return activePawnsGauge.get();
+  }
+
   static startPawnCreationTimer() {
     return pawnCreationDuration.startTimer();
   }

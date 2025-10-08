@@ -27,6 +27,11 @@ router.post('/create', validateCreatePawn, async (req: Request, res: Response) =
     const result = await blockchainService.createPawn(ethAmount);
     MetricsService.incrementPawnCreations('success');
     MetricsService.incrementBlockchainTransactions('create', 'success');
+    
+    // Update active pawns count (increment by 1)
+    const currentActivePawns = MetricsService.getActivePawnsCount();
+    MetricsService.setActivePawns(currentActivePawns + 1);
+    
     res.json(result);
   } catch (error: any) {
     console.error('Error creating pawn position:', error);
@@ -46,6 +51,11 @@ router.post('/redeem', validateRedeemPawn, async (req: Request, res: Response) =
     const txHash = await blockchainService.redeemPawn(positionId, usdtAmount);
     MetricsService.incrementPawnRedemptions('success');
     MetricsService.incrementBlockchainTransactions('redeem', 'success');
+    
+    // Update active pawns count (decrement by 1)
+    const currentActivePawns = MetricsService.getActivePawnsCount();
+    MetricsService.setActivePawns(Math.max(0, currentActivePawns - 1));
+    
     res.json({ txHash });
   } catch (error) {
     MetricsService.incrementPawnRedemptions('failure');
@@ -83,10 +93,6 @@ router.get('/user/:address', async (req: Request, res: Response) => {
   try {
     const { address } = req.params;
     const positions = await blockchainService.getUserPositions(address);
-    
-    // Update active pawns metric
-    const activePawns = positions.filter((pos: any) => pos.isActive).length;
-    MetricsService.setActivePawns(activePawns);
     
     res.json({ positions });
   } catch (error) {
