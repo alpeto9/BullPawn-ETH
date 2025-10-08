@@ -235,6 +235,11 @@ jobs:
       - name: Update kubeconfig
         run: |
           aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER_NAME }}
+          
+      - name: Verify kubectl connection
+        run: |
+          echo "Testing kubectl connection..."
+          kubectl get nodes --validate=false
 
       - name: Set up Helm
         uses: azure/setup-helm@v4.3.0
@@ -252,18 +257,6 @@ jobs:
       - name: Change directory
         run: |
           cd deploy/helm
-
-      - name: Deploy secrets
-        run: |
-          echo "Checking for secret files..."
-          ls -la ./sealed-secrets/production/ || echo "No sealed-secrets directory found"
-          if [ -f "./sealed-secrets/production/sealed-backend-secret.yaml" ]; then
-            echo "Applying sealed-backend-secret.yaml..."
-            kubectl apply -f ./sealed-secrets/production/sealed-backend-secret.yaml
-          else
-            echo "No secret files found, creating namespace and continuing..."
-            kubectl create namespace bullpawn-production --dry-run=client -o yaml | kubectl apply -f -
-          fi
 
       - name: Run helmfile apply for production
         run: |
