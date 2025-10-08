@@ -27,15 +27,15 @@ jobs:
       matrix:
         service:
           - name: backend
-            dockerfile: Dockerfile
+            dockerfile: ./backend/Dockerfile
             build-context: ./backend
             ecr-repo: bullpawn-dev-backend
           - name: frontend
-            dockerfile: Dockerfile
+            dockerfile: ./frontend/Dockerfile
             build-context: ./frontend
             ecr-repo: bullpawn-dev-frontend
           - name: contracts
-            dockerfile: Dockerfile
+            dockerfile: ./contracts/Dockerfile
             build-context: ./contracts
             ecr-repo: bullpawn-dev-contracts
     
