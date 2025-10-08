@@ -1,0 +1,35 @@
+replicaCount: 1
+
+image:
+  repository: {{ .Values | get "contracts.image.repository" | default "bullpawn-dev-contracts" }}
+  tag: {{ .Values | get "contracts.image.tag" | default "latest" }}
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 3000
+
+resources:
+  requests:
+    cpu: "250m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+env:
+  USDT_CONTRACT_ADDRESS: "0x5C221E77624690fff6dd7412D22CCeB3F3167453"
+  PAWN_CONTRACT_ADDRESS: "0x1234567890123456789012345678901234567890"
+  CHAINLINK_ETH_USD: "0x1234567890123456789012345678901234567890"
+  CHAINLINK_BTC_USD: "0x1234567890123456789012345678901234567890"
+  CHAINLINK_USDT_USD: "0x1234567890123456789012345678901234567890"
+  CHAINLINK_USDC_USD: "0x1234567890123456789012345678901234567890"
+  CHAINLINK_DAI_USD: "0x1234567890123456789012345678901234567890"
+  CHAINLINK_LINK_USD: "0x1234567890123456789012345678901234567890"
+  DEPLOYMENT_TYPE: "production"
+  FALLBACK_ETH_PRICE: "200000000000"
+
+secrets:
+  - sealed_secret_name: bullpawn-contracts
+    env_variable: PRIVATE_KEY
+    secret_key: private-key

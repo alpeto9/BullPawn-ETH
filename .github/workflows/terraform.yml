@@ -1,0 +1,103 @@
+name: Terraform Infrastructure
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'infrastructure/**' ]
+  pull_request:
+    branches: [ main ]
+    paths: [ 'infrastructure/**' ]
+
+env:
+  TF_VERSION: '1.6.0'
+  AWS_REGION: us-west-2
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    - name: Terraform Format Check
+      run: terraform fmt -check -recursive
+      working-directory: ./infrastructure
+
+    - name: Terraform Init
+      run: terraform init
+      working-directory: ./infrastructure
+
+    - name: Terraform Validate
+      run: terraform validate
+      working-directory: ./infrastructure
+
+    - name: Terraform Plan
+      run: terraform plan -out=tfplan
+      working-directory: ./infrastructure
+
+    - name: Upload Terraform Plan
+      uses: actions/upload-artifact@v3
+      with:
+        name: terraform-plan
+        path: infrastructure/tfplan
+
+  terraform-apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    - name: Download Terraform Plan
+      uses: actions/download-artifact@v3
+      with:
+        name: terraform-plan
+        path: infrastructure
+
+    - name: Terraform Init
+      run: terraform init
+      working-directory: ./infrastructure
+
+    - name: Terraform Apply
+      run: terraform apply -auto-approve tfplan
+      working-directory: ./infrastructure
+
+    - name: Output Infrastructure Info
+      run: |
+        echo "## Infrastructure Deployment Complete" >> $GITHUB_STEP_SUMMARY
+        echo "### EKS Cluster" >> $GITHUB_STEP_SUMMARY
+        terraform output -json >> $GITHUB_STEP_SUMMARY
+      working-directory: ./infrastructure

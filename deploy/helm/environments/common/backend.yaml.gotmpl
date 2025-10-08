@@ -1,0 +1,67 @@
+replicaCount: 2
+
+image:
+  repository: {{ .Values | get "backend.image.repository" | default "bullpawn-dev-backend" }}
+  tag: {{ .Values | get "backend.image.tag" | default "latest" }}
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 9001
+
+resources:
+  requests:
+    cpu: "250m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 9001
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 9001
+  initialDelaySeconds: 5
+  periodSeconds: 5
+
+env:
+  NODE_ENV: production
+  PORT: "9001"
+  ZKSYNC_RPC_URL: "https://sepolia.era.zksync.dev"
+  ZKSYNC_CHAIN_ID: "300"
+  USDT_CONTRACT_ADDRESS: "0x5C221E77624690fff6dd7412D22CCeB3F3167453"
+  PAWN_CONTRACT_ADDRESS: "0x1234567890123456789012345678901234567890"
+  MULTI_ORACLE_ADDRESS: "0x1234567890123456789012345678901234567890"
+  ETH_PRICE_FEED_ADDRESS: "0x1234567890123456789012345678901234567890"
+  BTC_PRICE_FEED_ADDRESS: "0x1234567890123456789012345678901234567890"
+  CHAINLINK_ETH_USD: "0x1234567890123456789012345678901234567890"
+  CHAINLINK_BTC_USD: "0x1234567890123456789012345678901234567890"
+  CHAINLINK_USDT_USD: "0x1234567890123456789012345678901234567890"
+  CHAINLINK_USDC_USD: "0x1234567890123456789012345678901234567890"
+  CHAINLINK_DAI_USD: "0x1234567890123456789012345678901234567890"
+  CHAINLINK_LINK_USD: "0x1234567890123456789012345678901234567890"
+  LOAN_TO_VALUE_RATIO: "7000"
+  INTEREST_RATE: "1000"
+  LIQUIDATION_THRESHOLD: "7000"
+  LIQUIDATION_BONUS: "500"
+  RESERVE_RATIO: "1000"
+  MIN_LOAN_AMOUNT: "100000000"
+  MAX_LOAN_AMOUNT: "100000000000"
+  ORACLE_ETH_WEIGHT: "80"
+  ORACLE_BTC_WEIGHT: "20"
+  MAX_PRICE_DEVIATION: "15"
+  MAX_PRICE_AGE: "3600"
+  DEPLOYMENT_TYPE: "production"
+  FALLBACK_ETH_PRICE: "200000000000"
+
+secrets:
+  - sealed_secret_name: bullpawn-backend
+    env_variable: PRIVATE_KEY
+    secret_key: private-key

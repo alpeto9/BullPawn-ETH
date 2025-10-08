@@ -1,0 +1,11 @@
+{{- if eq .Release.Name "balancer" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: balancer-config
+  annotations:
+    reloader.stakater.com/match: "true"
+data:
+  config.json: |-
+{{ .Values.balancerConfigJson | indent 4 }}
+{{- end }}

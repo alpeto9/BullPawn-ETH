@@ -6,6 +6,10 @@
   "scripts": {
     "build": "hardhat compile",
     "deploy": "hardhat run scripts/deploy.ts --network zkSyncTestnet",
+    "deploy:uups": "hardhat run scripts/deploy-uups.ts --network zkSyncTestnet",
+    "deploy:production": "hardhat run scripts/deploy-production.ts --network zkSyncTestnet",
+    "upgrade:v2": "hardhat run scripts/upgrade-to-v2.ts --network zkSyncTestnet",
+    "test:production": "hardhat run scripts/test-production.ts --network zkSyncTestnet",
     "dev": "hardhat node",
     "test": "hardhat test"
   },
@@ -21,6 +25,7 @@
   },
   "dependencies": {
     "@chainlink/contracts": "^1.5.0",
-    "@openzeppelin/contracts": "^4.6.0"
+    "@openzeppelin/contracts": "^4.6.0",
+    "@openzeppelin/contracts-upgradeable": "^4.6.0"
   }
 }

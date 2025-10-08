@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/IPriceFeed.sol";
 
@@ -11,7 +13,13 @@ interface IERC20Extended is IERC20 {
     function decimals() external view returns (uint8);
 }
 
-contract PawnSystem is ReentrancyGuard, Pausable, Ownable {
+contract PawnSystem is 
+    Initializable,
+    ReentrancyGuardUpgradeable, 
+    PausableUpgradeable, 
+    OwnableUpgradeable,
+    UUPSUpgradeable 
+{
     struct PawnPosition {
         address user;
         uint256 ethAmount;
@@ -22,8 +30,8 @@ contract PawnSystem is ReentrancyGuard, Pausable, Ownable {
         bool isLiquidated;
     }
 
-    IERC20Extended public immutable usdtToken;
-    IPriceFeed public immutable priceFeed;
+    IERC20Extended public usdtToken;
+    IPriceFeed public priceFeed;
     
     uint256 public constant LOAN_TO_VALUE_RATIO = 70; // 70%
     uint256 public constant INTEREST_RATE = 10; // 10%
@@ -37,6 +45,10 @@ contract PawnSystem is ReentrancyGuard, Pausable, Ownable {
     mapping(uint256 => PawnPosition) public pawnPositions;
     mapping(address => uint256[]) public userPositions;
     uint256 public nextPositionId = 1;
+    
+    // Version tracking for upgrades
+    string public constant VERSION = "1.0.0";
+    uint256 public upgradeCount;
 
     event PawnCreated(
         uint256 indexed positionId,
@@ -60,12 +72,30 @@ contract PawnSystem is ReentrancyGuard, Pausable, Ownable {
         uint256 usdtAmount
     );
 
-    constructor(address _usdtToken, address _priceFeed) {
+    event ContractUpgraded(
+        address indexed oldImplementation,
+        address indexed newImplementation,
+        uint256 upgradeCount
+    );
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(address _usdtToken, address _priceFeed) public initializer {
+        __ReentrancyGuard_init();
+        __Pausable_init();
+        __Ownable_init();
+        __UUPSUpgradeable_init();
+        
         usdtToken = IERC20Extended(_usdtToken);
         priceFeed = IPriceFeed(_priceFeed);
     }
 
-    function createPawn() external payable nonReentrant whenNotPaused {
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
+    function createPawn() external payable virtual nonReentrant whenNotPaused {
         require(msg.value > 0, "ETH amount must be greater than 0");
         
         // Get current ETH price (simplified - in production, use Chainlink oracles)
@@ -234,6 +264,33 @@ contract PawnSystem is ReentrancyGuard, Pausable, Ownable {
         uint256 balance = usdtToken.balanceOf(address(this));
         require(balance > 0, "No USDT to withdraw");
         require(usdtToken.transfer(owner(), balance), "USDT withdrawal failed");
+    }
+
+    // Upgrade-related functions
+    function upgradeTo(address newImplementation) external override onlyOwner {
+        address oldImplementation = _getImplementation();
+        upgradeCount++;
+        _upgradeToAndCall(newImplementation, "", false);
+        emit ContractUpgraded(oldImplementation, newImplementation, upgradeCount);
+    }
+
+    function upgradeToAndCall(address newImplementation, bytes calldata data) external payable override onlyOwner {
+        address oldImplementation = _getImplementation();
+        upgradeCount++;
+        _upgradeToAndCall(newImplementation, data, false);
+        emit ContractUpgraded(oldImplementation, newImplementation, upgradeCount);
+    }
+
+    function getImplementation() external view returns (address) {
+        return _getImplementation();
+    }
+
+    function getVersion() external view virtual returns (string memory) {
+        return VERSION;
+    }
+
+    function getUpgradeCount() external view returns (uint256) {
+        return upgradeCount;
     }
 
     // Receive ETH

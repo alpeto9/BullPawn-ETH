@@ -1,0 +1,45 @@
+replicaCount: 2
+
+image:
+  repository: {{ .Values | get "frontend.image.repository" | default "bullpawn-dev-frontend" }}
+  tag: {{ .Values | get "frontend.image.tag" | default "latest" }}
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "200m"
+    memory: "256Mi"
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: 80
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: 80
+  initialDelaySeconds: 5
+  periodSeconds: 5
+
+env:
+  REACT_APP_BACKEND_URL: "/api"
+  REACT_APP_ZKSYNC_RPC_URL: "https://sepolia.era.zksync.dev"
+  REACT_APP_ZKSYNC_CHAIN_ID: "300"
+  REACT_APP_PAWN_CONTRACT_ADDRESS: "0x1234567890123456789012345678901234567890"
+  REACT_APP_USDT_CONTRACT_ADDRESS: "0x5C221E77624690fff6dd7412D22CCeB3F3167453"
+  REACT_APP_MULTI_ORACLE_ADDRESS: "0x1234567890123456789012345678901234567890"
+  REACT_APP_ETH_PRICE_FEED_ADDRESS: "0x1234567890123456789012345678901234567890"
+  REACT_APP_BTC_PRICE_FEED_ADDRESS: "0x1234567890123456789012345678901234567890"
+  REACT_APP_CHAINLINK_ETH_USD: "0x1234567890123456789012345678901234567890"
+  REACT_APP_CHAINLINK_BTC_USD: "0x1234567890123456789012345678901234567890"
+  REACT_APP_DEPLOYMENT_TYPE: "production"

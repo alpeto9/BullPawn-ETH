@@ -1,0 +1,44 @@
+---
+helmDefaults:
+  verify: false
+  wait: false
+  timeout: 600
+  recreatePods: false
+  force: false
+  createNamespace: false
+---
+environments:
+  development: {}
+  staging: {}
+  production: {}
+---
+repositories:
+  - name: bitnami
+    url: https://charts.bitnami.com/bitnami
+  - name: vmware-tanzu
+    url: https://vmware-tanzu.github.io/helm-charts
+---
+releases:
+  - name: backend
+    chart: ./helm/bullpawn
+    version: 0.1.0
+    values:
+      - environments/common/backend.yaml.gotmpl
+      - environments/{{ .Environment.Name }}/backend.yaml.gotmpl
+      - environments/{{ .Environment.Name }}/common-environment-variables.yaml.gotmpl
+  - name: frontend
+    chart: ./helm/bullpawn
+    version: 0.1.0
+    values:
+      - environments/common/frontend.yaml.gotmpl
+      - environments/{{ .Environment.Name }}/frontend.yaml.gotmpl
+      - environments/{{ .Environment.Name }}/common-environment-variables.yaml.gotmpl
+    needs:
+      - backend
+  - name: contracts
+    chart: ./helm/bullpawn
+    version: 0.1.0
+    values:
+      - environments/common/contracts.yaml.gotmpl
+      - environments/{{ .Environment.Name }}/contracts.yaml.gotmpl
+      - environments/{{ .Environment.Name }}/common-environment-variables.yaml.gotmpl

@@ -1,0 +1,26 @@
+# Staging backend overrides
+serviceMonitor:
+  enabled: true
+  labels:
+    release: kube-prometheus-stack
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 70
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/limit-rps: "10"
+    nginx.ingress.kubernetes.io/limit-connections: "50"
+    nginx.ingress.kubernetes.io/limit-burst: "20"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  hosts:
+    - host: ""  # No specific host - will work with LoadBalancer IP/URL
+      paths:
+        - path: /api
+          pathType: Prefix
