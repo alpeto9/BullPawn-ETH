@@ -19,7 +19,7 @@ jobs:
     name: Build and Push Docker Images
     runs-on: ubuntu-latest
     permissions:
-      packages: write
+      id-token: write
       contents: read
     
     outputs:
@@ -212,6 +212,9 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs:
       - build-and-push
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
