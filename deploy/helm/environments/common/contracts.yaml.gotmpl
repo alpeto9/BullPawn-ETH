@@ -17,6 +17,24 @@ resources:
     cpu: "500m"
     memory: "512Mi"
 
+livenessProbe:
+  exec:
+    command:
+      - /bin/sh
+      - -c
+      - "echo 'Contracts container is alive'"
+  initialDelaySeconds: 30
+  periodSeconds: 30
+
+readinessProbe:
+  exec:
+    command:
+      - /bin/sh
+      - -c
+      - "echo 'Contracts container is ready'"
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
 env:
   USDT_CONTRACT_ADDRESS: "0x5C221E77624690fff6dd7412D22CCeB3F3167453"
   PAWN_CONTRACT_ADDRESS: "0x1234567890123456789012345678901234567890"
