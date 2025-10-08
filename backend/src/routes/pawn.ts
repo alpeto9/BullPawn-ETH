@@ -29,7 +29,7 @@ router.post('/create', validateCreatePawn, async (req: Request, res: Response) =
     MetricsService.incrementBlockchainTransactions('create', 'success');
     
     // Update active pawns count (increment by 1)
-    const currentActivePawns = MetricsService.getActivePawnsCount();
+    const currentActivePawns = await MetricsService.getActivePawnsCount();
     MetricsService.setActivePawns(currentActivePawns + 1);
     
     res.json(result);
@@ -53,7 +53,7 @@ router.post('/redeem', validateRedeemPawn, async (req: Request, res: Response) =
     MetricsService.incrementBlockchainTransactions('redeem', 'success');
     
     // Update active pawns count (decrement by 1)
-    const currentActivePawns = MetricsService.getActivePawnsCount();
+    const currentActivePawns = await MetricsService.getActivePawnsCount();
     MetricsService.setActivePawns(Math.max(0, currentActivePawns - 1));
     
     res.json({ txHash });

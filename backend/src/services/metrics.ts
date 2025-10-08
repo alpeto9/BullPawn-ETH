@@ -59,8 +59,9 @@ export class MetricsService {
     activePawnsGauge.set(count);
   }
 
-  static getActivePawnsCount(): number {
-    return activePawnsGauge.get();
+  static async getActivePawnsCount(): Promise<number> {
+    const metric = await activePawnsGauge.get();
+    return metric.values[0]?.value || 0;
   }
 
   static startPawnCreationTimer() {
