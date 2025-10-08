@@ -37,10 +37,12 @@ export class BlockchainService {
 
   async getETHPrice(): Promise<number> {
     try {
-      // First try to get price from Chainlink oracle
-      if (this.oracleContract) {
+      // First try to get price from real Chainlink oracle
+      const chainlinkEthUsdAddress = process.env.CHAINLINK_ETH_USD;
+      if (chainlinkEthUsdAddress) {
         try {
-          const price = await this.oracleContract.getLatestPrice();
+          const chainlinkContract = new Contract(chainlinkEthUsdAddress, ChainlinkPriceFeedABI as any, this.provider);
+          const price = await chainlinkContract.getLatestPrice();
           const priceInUSD = parseFloat(ethers.utils.formatUnits(price, 8));
           console.log('Chainlink oracle price:', priceInUSD, 'USD');
           return priceInUSD;
