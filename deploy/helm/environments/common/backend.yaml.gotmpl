@@ -1,4 +1,4 @@
-replicaCount: 2
+replicaCount: 1
 
 image:
   repository: {{ .Values | get "backend.image.repository" | default "bullpawn-dev-backend" }}
@@ -65,3 +65,13 @@ secrets:
   - sealed_secret_name: bullpawn-backend
     env_variable: PRIVATE_KEY
     secret_key: private-key
+
+# ServiceMonitor configuration for Prometheus
+serviceMonitor:
+  enabled: true
+  labels:
+    release: kube-prometheus-stack
+  interval: 30s
+  scrapeTimeout: 10s
+  path: /api/metrics
+  port: http
