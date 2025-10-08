@@ -54,9 +54,22 @@ jobs:
       id: extract-addresses
       run: |
         cd contracts
-        # Extract addresses from the deployment log
-        USDT_ADDRESS=$(grep "MockUSDT contract address:" deployment.log | cut -d' ' -f4)
-        PAWN_ADDRESS=$(grep "PawnSystem contract address:" deployment.log | cut -d' ' -f4)
+        # Show the full deployment log for debugging
+        echo "=== Full Deployment Log ==="
+        cat deployment.log
+        echo "=== End Deployment Log ==="
+        
+        # Extract addresses from the deployment log with more flexible patterns
+        USDT_ADDRESS=$(grep -i "mockusdt.*address" deployment.log | grep -o "0x[a-fA-F0-9]\{40\}" | head -1)
+        PAWN_ADDRESS=$(grep -i "pawnsystem.*address" deployment.log | grep -o "0x[a-fA-F0-9]\{40\}" | head -1)
+        
+        # If still empty, try alternative patterns
+        if [ -z "$USDT_ADDRESS" ]; then
+          USDT_ADDRESS=$(grep -o "0x[a-fA-F0-9]\{40\}" deployment.log | head -1)
+        fi
+        if [ -z "$PAWN_ADDRESS" ]; then
+          PAWN_ADDRESS=$(grep -o "0x[a-fA-F0-9]\{40\}" deployment.log | tail -1)
+        fi
         
         # Set outputs for use in subsequent steps
         echo "USDT_CONTRACT_ADDRESS=${USDT_ADDRESS}" >> $GITHUB_OUTPUT
