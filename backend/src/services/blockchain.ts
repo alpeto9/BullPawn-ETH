@@ -127,21 +127,36 @@ export class BlockchainService {
     }
     
     try {
+      console.log(`Redeeming pawn ${positionId} with ${usdtAmount} USDT`);
+      
+      // Check if wallet has enough USDT balance
+      const usdtBalance = await this.usdtContract.balanceOf(this.wallet!.address);
+      const requiredAmount = ethers.utils.parseUnits(usdtAmount, 6);
+      console.log(`USDT Balance: ${ethers.utils.formatUnits(usdtBalance, 6)}, Required: ${usdtAmount}`);
+      
+      if (usdtBalance.lt(requiredAmount)) {
+        throw new Error(`Insufficient USDT balance. Have: ${ethers.utils.formatUnits(usdtBalance, 6)}, Need: ${usdtAmount}`);
+      }
+      
       // First approve USDT spending
+      console.log('Approving USDT spending...');
       const approveTx = await this.usdtContract.approve(
         process.env.PAWN_CONTRACT_ADDRESS,
-        ethers.utils.parseUnits(usdtAmount, 6) // USDT has 6 decimals
+        requiredAmount
       );
       await approveTx.wait();
+      console.log('USDT approval successful');
 
       // Then redeem the pawn
+      console.log('Redeeming pawn...');
       const tx = await this.pawnContract.redeemPawn(positionId);
       const receipt = await tx.wait();
+      console.log('Pawn redemption successful');
 
       return receipt.transactionHash;
     } catch (error) {
       console.error('Error redeeming pawn:', error);
-      throw new Error('Failed to redeem pawn position');
+      throw new Error(`Failed to redeem pawn position: ${error.message}`);
     }
   }
 

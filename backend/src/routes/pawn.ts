@@ -57,10 +57,14 @@ router.post('/redeem', validateRedeemPawn, async (req: Request, res: Response) =
     MetricsService.setActivePawns(Math.max(0, currentActivePawns - 1));
     
     res.json({ txHash });
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error redeeming pawn position:', error);
     MetricsService.incrementPawnRedemptions('failure');
     MetricsService.incrementBlockchainTransactions('redeem', 'failure');
-    res.status(500).json({ error: 'Failed to redeem pawn position' });
+    res.status(500).json({ 
+      error: 'Failed to redeem pawn position',
+      details: error.message || 'Unknown error'
+    });
   } finally {
     timer();
   }
