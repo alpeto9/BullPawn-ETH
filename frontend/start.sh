@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Generate config.json from environment variables at runtime
 echo "Generating runtime configuration..."
