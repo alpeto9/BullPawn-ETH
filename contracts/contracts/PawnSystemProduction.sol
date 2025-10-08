@@ -428,6 +428,10 @@ contract PawnSystemProduction is
         return pawnPositions[positionId];
     }
 
+    function getTotalPawns() external view returns (uint256) {
+        return nextPositionId - 1;
+    }
+
     function getVersion() external pure returns (string memory) {
         return VERSION;
     }

@@ -230,6 +230,10 @@ contract PawnSystem is
         return pawnPositions[positionId];
     }
 
+    function getTotalPawns() external view returns (uint256) {
+        return nextPositionId - 1;
+    }
+
     // Oracle-related functions
     function getLatestPrice() external view returns (int256) {
         (, int256 price, , , ) = priceFeed.latestRoundData();
