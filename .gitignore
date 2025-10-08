@@ -85,6 +85,10 @@ artifacts/
 typechain/
 typechain-types/
 
+# zkSync Hardhat files
+cache-zk/
+artifacts-zk/
+
 # Docker
 .dockerignore
 
@@ -102,3 +106,4 @@ check-balance.js
 *.key
 *.pem
 secrets/
+contracts/artifacts-zk/
