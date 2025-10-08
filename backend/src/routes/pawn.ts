@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { BlockchainService } from '../services/blockchain';
+import { MetricsService } from '../services/metrics';
 import { validateCreatePawn, validateRedeemPawn } from '../middleware/validation';
 
 const router = Router();
@@ -9,33 +10,49 @@ const blockchainService = new BlockchainService();
 router.get('/price/eth', async (req: Request, res: Response) => {
   try {
     const price = await blockchainService.getETHPrice();
+    MetricsService.incrementEthPriceRequests('success');
     res.json({ price });
   } catch (error) {
+    MetricsService.incrementEthPriceRequests('failure');
     res.status(500).json({ error: 'Failed to get ETH price' });
   }
 });
 
 // Create a new pawn position
 router.post('/create', validateCreatePawn, async (req: Request, res: Response) => {
+  const timer = MetricsService.startPawnCreationTimer();
   try {
     const { ethAmount } = req.body;
     console.log('Creating pawn with ETH amount:', ethAmount);
     const result = await blockchainService.createPawn(ethAmount);
+    MetricsService.incrementPawnCreations('success');
+    MetricsService.incrementBlockchainTransactions('create', 'success');
     res.json(result);
   } catch (error: any) {
     console.error('Error creating pawn position:', error);
+    MetricsService.incrementPawnCreations('failure');
+    MetricsService.incrementBlockchainTransactions('create', 'failure');
     res.status(500).json({ error: 'Failed to create pawn position', details: error.message });
+  } finally {
+    timer();
   }
 });
 
 // Redeem a pawn position
 router.post('/redeem', validateRedeemPawn, async (req: Request, res: Response) => {
+  const timer = MetricsService.startPawnRedemptionTimer();
   try {
     const { positionId, usdtAmount } = req.body;
     const txHash = await blockchainService.redeemPawn(positionId, usdtAmount);
+    MetricsService.incrementPawnRedemptions('success');
+    MetricsService.incrementBlockchainTransactions('redeem', 'success');
     res.json({ txHash });
   } catch (error) {
+    MetricsService.incrementPawnRedemptions('failure');
+    MetricsService.incrementBlockchainTransactions('redeem', 'failure');
     res.status(500).json({ error: 'Failed to redeem pawn position' });
+  } finally {
+    timer();
   }
 });
 
@@ -66,6 +83,11 @@ router.get('/user/:address', async (req: Request, res: Response) => {
   try {
     const { address } = req.params;
     const positions = await blockchainService.getUserPositions(address);
+    
+    // Update active pawns metric
+    const activePawns = positions.filter((pos: any) => pos.isActive).length;
+    MetricsService.setActivePawns(activePawns);
+    
     res.json({ positions });
   } catch (error) {
     res.status(500).json({ error: 'Failed to get user positions' });

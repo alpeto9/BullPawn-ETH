@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { pawnRoutes } from './routes/pawn';
+import metricsRoutes from './routes/metrics';
 import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
@@ -29,6 +30,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/pawn', pawnRoutes);
+app.use('/metrics', metricsRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

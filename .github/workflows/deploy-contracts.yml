@@ -54,10 +54,25 @@ jobs:
       id: extract-addresses
       run: |
         cd contracts
+        # Check directory structure
+        echo "=== Directory Structure ==="
+        ls -la
+        echo "=== Artifacts Directory ==="
+        ls -la artifacts-zk/ 2>/dev/null || echo "artifacts-zk directory not found"
+        echo "=== Cache Directory ==="
+        ls -la cache/ 2>/dev/null || echo "cache directory not found"
+        
         # Show the full deployment log for debugging
         echo "=== Full Deployment Log ==="
         cat deployment.log
         echo "=== End Deployment Log ==="
+        
+        # Check if deployment actually succeeded
+        if grep -q "Deployment completed" deployment.log; then
+          echo "✅ Deployment completed successfully"
+        else
+          echo "❌ Deployment may have failed"
+        fi
         
         # Extract addresses from the deployment log with more flexible patterns
         USDT_ADDRESS=$(grep -i "mockusdt.*address" deployment.log | grep -o "0x[a-fA-F0-9]\{40\}" | head -1)
