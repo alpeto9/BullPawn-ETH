@@ -19,13 +19,8 @@ ingress:
     nginx.ingress.kubernetes.io/limit-connections: "100"
     nginx.ingress.kubernetes.io/limit-burst: "50"
     nginx.ingress.kubernetes.io/rewrite-target: /
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
   hosts:
     - host: ""  # No specific host - will work with LoadBalancer IP/URL
       paths:
         - path: /api
           pathType: Prefix
-  tls:
-    - secretName: bullpawn-backend-tls
-      hosts:
-        - ""  # Will work with any host
