@@ -28,6 +28,7 @@ import { apiService } from '../services/api';
 import { format } from 'date-fns';
 
 interface Position {
+  positionId: number;
   user: string;
   ethAmount: string;
   usdtAmount: string;
