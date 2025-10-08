@@ -14,8 +14,8 @@ spec:
     matchLabels:
       {{- include "bullpawn.selectorLabels" . | nindent 6 }}
   endpoints:
-  - port: metrics
-    path: {{ .Values.serviceMonitor.metricsPath | default "/metrics" }}
+  - port: {{ .Values.serviceMonitor.port | default "metrics" }}
+    path: {{ .Values.serviceMonitor.path | default "/metrics" }}
     interval: {{ .Values.serviceMonitor.interval | default "30s" }}
     scrapeTimeout: {{ .Values.serviceMonitor.scrapeTimeout | default "10s" }}
     {{- with .Values.serviceMonitor.relabelings }}
