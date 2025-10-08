@@ -106,4 +106,4 @@ check-balance.js
 *.key
 *.pem
 secrets/
-contracts/artifacts-zk/
+contracts/artifacts-zk/*
