@@ -83,7 +83,7 @@ const CreatePawn: React.FC = () => {
       const loanAmount = (ethValue * 70) / 100; // 70% LTV
       const result = await blockchainService.createPawn(loanAmount, ethValue);
 
-      setSuccess(`Pawn position created successfully! Transaction: ${result.txHash}`);
+      setSuccess(`Pawn position created successfully! Transaction: ${result}`);
       setEthAmount('');
       setCalculatedLoan(0);
     } catch (error: any) {
