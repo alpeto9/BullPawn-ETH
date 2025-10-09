@@ -169,14 +169,38 @@ export class BlockchainService {
         }
       }
       
-      // First approve USDT spending
-      console.log('Approving USDT spending...');
-      const approveTx = await this.usdtContract.approve(
-        process.env.PAWN_CONTRACT_ADDRESS,
-        requiredAmount
-      );
-      await approveTx.wait();
-      console.log('USDT approval successful');
+      // Check current allowance first
+      const pawnContractAddress = process.env.PAWN_CONTRACT_ADDRESS;
+      console.log('Pawn contract address:', pawnContractAddress);
+      console.log('Wallet address:', this.wallet!.address);
+      
+      const currentAllowance = await this.usdtContract.allowance(this.wallet!.address, pawnContractAddress);
+      console.log('Current allowance:', ethers.utils.formatUnits(currentAllowance, 6), 'USDT');
+      console.log('Required amount:', ethers.utils.formatUnits(requiredAmount, 6), 'USDT');
+      
+      // Only approve if current allowance is insufficient
+      if (currentAllowance.lt(requiredAmount)) {
+        console.log('Approving USDT spending...');
+        console.log('Approving contract:', process.env.PAWN_CONTRACT_ADDRESS);
+        
+        const approveTx = await this.usdtContract.approve(
+          pawnContractAddress,
+          requiredAmount
+        );
+        console.log('Approval transaction hash:', approveTx.hash);
+        await approveTx.wait();
+        console.log('USDT approval successful');
+        
+        // Verify the approval
+        const newAllowance = await this.usdtContract.allowance(this.wallet!.address, pawnContractAddress);
+        console.log('New allowance:', ethers.utils.formatUnits(newAllowance, 6), 'USDT');
+        
+        if (newAllowance.lt(requiredAmount)) {
+          throw new Error(`Approval failed. Allowance: ${ethers.utils.formatUnits(newAllowance, 6)}, Required: ${ethers.utils.formatUnits(requiredAmount, 6)}`);
+        }
+      } else {
+        console.log('Sufficient allowance already exists');
+      }
 
       // Then redeem the pawn
       console.log('Redeeming pawn...');

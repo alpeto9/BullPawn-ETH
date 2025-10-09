@@ -25,6 +25,7 @@ import {
 import { Redeem, Warning, CheckCircle } from '@mui/icons-material';
 import { useWeb3 } from '../contexts/Web3Context';
 import { apiService } from '../services/api';
+import { FrontendBlockchainService } from '../services/blockchain';
 import { format } from 'date-fns';
 
 interface Position {
@@ -39,7 +40,7 @@ interface Position {
 }
 
 const MyPositions: React.FC = () => {
-  const { account } = useWeb3();
+  const { account, provider, zkProvider } = useWeb3();
   const [positions, setPositions] = useState<Position[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -52,23 +53,28 @@ const MyPositions: React.FC = () => {
   const [redeemResult, setRedeemResult] = useState<{ success: boolean; message: string; txHash?: string } | null>(null);
 
   useEffect(() => {
-    if (account) {
+    if (account && provider && zkProvider) {
       loadPositions();
     }
-  }, [account]);
+  }, [account, provider, zkProvider]);
 
   const loadPositions = async () => {
-    if (!account) return;
+    if (!account || !provider || !zkProvider) return;
 
     try {
       setLoading(true);
-      const response = await apiService.getUserPositions(account);
+      
+      // Create blockchain service instance
+      const blockchainService = new FrontendBlockchainService(provider, zkProvider);
+      
+      // Get user positions directly from blockchain
+      const positionIds = await blockchainService.getUserPositions(account);
       
       // Load detailed information for each position
       const positionDetails = await Promise.all(
-        response.positions.map(async (positionId: number) => {
-          const position = await apiService.getPosition(positionId);
-          return { ...position, positionId };
+        positionIds.map(async (positionId: number) => {
+          const position = await blockchainService.getPosition(positionId);
+          return position;
         })
       );
 
@@ -83,17 +89,29 @@ const MyPositions: React.FC = () => {
 
   const handleRedeem = async () => {
     if (!redeemDialog.positionId || !redeemAmount) return;
+    if (!provider || !zkProvider) {
+      setRedeemResult({
+        success: false,
+        message: 'Please connect your wallet first'
+      });
+      return;
+    }
 
     try {
       setRedeemLoading(true);
       setRedeemResult(null);
-      const result = await apiService.redeemPawn(redeemDialog.positionId, redeemAmount);
+      
+      // Create blockchain service instance
+      const blockchainService = new FrontendBlockchainService(provider, zkProvider);
+      
+      // Redeem the pawn using user's wallet
+      const txHash = await blockchainService.redeemPawn(redeemDialog.positionId);
       
       setError('');
       setRedeemResult({
         success: true,
         message: 'Position redeemed successfully!',
-        txHash: result.txHash
+        txHash: txHash
       });
       
       loadPositions(); // Refresh positions

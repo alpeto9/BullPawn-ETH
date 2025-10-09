@@ -16,9 +16,10 @@ import {
 import { Send, Calculate, TrendingUp, Security, Schedule } from '@mui/icons-material';
 import { useWeb3 } from '../contexts/Web3Context';
 import { apiService } from '../services/api';
+import { FrontendBlockchainService } from '../services/blockchain';
 
 const CreatePawn: React.FC = () => {
-  const { account, provider } = useWeb3();
+  const { account, provider, zkProvider } = useWeb3();
   const [ethAmount, setEthAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -28,8 +29,10 @@ const CreatePawn: React.FC = () => {
   const [priceLoading, setPriceLoading] = useState(true);
 
   useEffect(() => {
-    loadETHPrice();
-  }, []);
+    if (provider && zkProvider) {
+      loadETHPrice();
+    }
+  }, [provider, zkProvider]);
 
   useEffect(() => {
     if (ethAmount && ethPrice && ethPrice > 0) {
@@ -42,10 +45,13 @@ const CreatePawn: React.FC = () => {
   }, [ethAmount, ethPrice]);
 
   const loadETHPrice = async () => {
+    if (!provider || !zkProvider) return;
+    
     try {
       setPriceLoading(true);
-      const response = await apiService.getETHPrice();
-      setEthPrice(response.price);
+      const blockchainService = new FrontendBlockchainService(provider, zkProvider);
+      const price = await blockchainService.getETHPrice();
+      setEthPrice(price);
     } catch (error) {
       console.error('Error loading ETH price:', error);
     } finally {
@@ -54,7 +60,7 @@ const CreatePawn: React.FC = () => {
   };
 
   const handleCreatePawn = async () => {
-    if (!account || !provider) {
+    if (!account || !provider || !zkProvider) {
       setError('Please connect your wallet first');
       return;
     }
@@ -69,8 +75,11 @@ const CreatePawn: React.FC = () => {
       setError('');
       setSuccess('');
 
-      // Create the pawn position
-      const result = await apiService.createPawn(ethAmount);
+      // Create blockchain service instance
+      const blockchainService = new FrontendBlockchainService(provider, zkProvider);
+      
+      // Create the pawn position using user's wallet
+      const result = await blockchainService.createPawn(ethAmount);
 
       setSuccess(`Pawn position created successfully! Transaction: ${result.txHash}`);
       setEthAmount('');
