@@ -1,6 +1,6 @@
 import { Provider, Wallet, Contract, utils } from 'zksync-web3';
 import { ethers } from 'ethers';
-const PawnSystemABI = require('../abis/PawnSystem.json').abi;
+const SimplePawnSystemABI = require('../abis/SimplePawnSystem.json').abi;
 const MockUSDTABI = require('../abis/MockUSDT.json');
 const ChainlinkPriceFeedABI = require('../abis/ChainlinkPriceFeed.json').abi;
 
@@ -25,7 +25,7 @@ export class BlockchainService {
     
     // Only create contracts if addresses are provided
         if (pawnAddress && usdtAddress && this.wallet) {
-          this.pawnContract = new Contract(pawnAddress, PawnSystemABI, this.wallet);
+          this.pawnContract = new Contract(pawnAddress, SimplePawnSystemABI, this.wallet);
           this.usdtContract = new Contract(usdtAddress, MockUSDTABI, this.wallet);
         }
     

@@ -1,11 +1,11 @@
 import { ethers } from 'ethers';
 import { Provider, Contract } from 'zksync-web3';
-import PawnSystemABI from '../abis/PawnSystem.json';
+import SimplePawnSystemABI from '../abis/SimplePawnSystem.json';
 
 // Contract addresses - from environment variables
 const CONTRACT_ADDRESSES = {
-  PAWN_SYSTEM: process.env.REACT_APP_PAWN_CONTRACT_ADDRESS || '0xAc1415613608a3a55B727B502Fab768bEf089413',
-  MOCK_USDT: process.env.REACT_APP_USDT_CONTRACT_ADDRESS || '0xEBD6A562FEb1dFf4a0bf606bdf8D9cd56480d473',
+  SIMPLE_PAWN_SYSTEM: process.env.REACT_APP_PAWN_CONTRACT_ADDRESS || '0x386ab82DF4Fb449cF16f9a42E13e7Bc25Cfe0010',
+  MOCK_USDT: process.env.REACT_APP_USDT_CONTRACT_ADDRESS || '0x0b491BBbe8D998a1ed986daf539DE3D765626e68',
   MOCK_PRICE_FEED: process.env.REACT_APP_ETH_PRICE_FEED_ADDRESS || '0xaC92601017E3F753Ea7bE9De64fcC786c8FB0230'
 };
 
@@ -24,8 +24,8 @@ export class FrontendBlockchainService {
     
     // Initialize contracts with the correct ABIs
     this.pawnContract = new ethers.Contract(
-      CONTRACT_ADDRESSES.PAWN_SYSTEM,
-      PawnSystemABI.abi,
+      CONTRACT_ADDRESSES.SIMPLE_PAWN_SYSTEM,
+      SimplePawnSystemABI.abi,
       this.signer
     );
     
