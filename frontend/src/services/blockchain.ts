@@ -1,15 +1,117 @@
 import { ethers } from 'ethers';
 import { Provider, Contract } from 'zksync-web3';
 
-// Contract ABIs - we'll need to copy these from the backend
-const SimplePawnSystemABI = [
+// Contract ABIs - using the same ABI as backend
+const PawnSystemABI = [
   {
     "inputs": [
-      {"internalType": "address", "name": "_usdtToken", "type": "address"},
-      {"internalType": "address", "name": "_priceFeed", "type": "address"}
+      {
+        "internalType": "address",
+        "name": "_usdtToken",
+        "type": "address"
+      }
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "positionId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "ethAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "usdtAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "maturityDate",
+        "type": "uint256"
+      }
+    ],
+    "name": "PawnCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "positionId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "ethAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "usdtAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "PawnRedeemed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "positionId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "ethAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "usdtAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "PawnLiquidated",
+    "type": "event"
   },
   {
     "inputs": [],
@@ -39,7 +141,7 @@ const SimplePawnSystemABI = [
           {"internalType": "bool", "name": "isActive", "type": "bool"},
           {"internalType": "bool", "name": "isLiquidated", "type": "bool"}
         ],
-        "internalType": "struct SimplePawnSystem.PawnPosition",
+        "internalType": "struct PawnSystem.PawnPosition",
         "name": "",
         "type": "tuple"
       }
@@ -120,7 +222,7 @@ const MockPriceFeedABI = [
 
 // Contract addresses - from environment variables
 const CONTRACT_ADDRESSES = {
-  SIMPLE_PAWN_SYSTEM: process.env.REACT_APP_PAWN_CONTRACT_ADDRESS || '0x386ab82DF4Fb449cF16f9a42E13e7Bc25Cfe0010',
+  PAWN_SYSTEM: process.env.REACT_APP_PAWN_CONTRACT_ADDRESS || '0x386ab82DF4Fb449cF16f9a42E13e7Bc25Cfe0010',
   MOCK_USDT: process.env.REACT_APP_USDT_CONTRACT_ADDRESS || '0x0b491BBbe8D998a1ed986daf539DE3D765626e68',
   MOCK_PRICE_FEED: process.env.REACT_APP_ETH_PRICE_FEED_ADDRESS || '0xaC92601017E3F753Ea7bE9De64fcC786c8FB0230'
 };
@@ -140,8 +242,8 @@ export class FrontendBlockchainService {
 
     // Initialize contracts
     this.pawnContract = new ethers.Contract(
-      CONTRACT_ADDRESSES.SIMPLE_PAWN_SYSTEM,
-      SimplePawnSystemABI,
+      CONTRACT_ADDRESSES.PAWN_SYSTEM,
+      PawnSystemABI,
       this.signer
     );
 
@@ -229,13 +331,13 @@ export class FrontendBlockchainService {
       }
 
       // Check allowance
-      const currentAllowance = await this.usdtContract.allowance(userAddress, CONTRACT_ADDRESSES.SIMPLE_PAWN_SYSTEM);
+      const currentAllowance = await this.usdtContract.allowance(userAddress, CONTRACT_ADDRESSES.PAWN_SYSTEM);
       console.log('Current allowance:', ethers.utils.formatUnits(currentAllowance, 6));
 
       if (currentAllowance.lt(repaymentAmount)) {
         console.log('Approving USDT spending...');
         const approveTx = await this.usdtContract.approve(
-          CONTRACT_ADDRESSES.SIMPLE_PAWN_SYSTEM,
+          CONTRACT_ADDRESSES.PAWN_SYSTEM,
           repaymentAmount
         );
         await approveTx.wait();
