@@ -160,12 +160,12 @@ export class FrontendBlockchainService {
       const repaymentAmount = position.amount;
       
       // Check current allowance
-      const currentAllowance = await this.usdtContract.allowance(userAddress, CONTRACT_ADDRESSES.PAWN_SYSTEM);
+      const currentAllowance = await this.usdtContract.allowance(userAddress, CONTRACT_ADDRESSES.SIMPLE_PAWN_SYSTEM);
       
       // If allowance is insufficient, approve the contract
       if (currentAllowance.lt(repaymentAmount)) {
         const approveTx = await this.usdtContract.approve(
-          CONTRACT_ADDRESSES.PAWN_SYSTEM,
+          CONTRACT_ADDRESSES.SIMPLE_PAWN_SYSTEM,
           repaymentAmount
         );
         await approveTx.wait();
