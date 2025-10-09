@@ -24,10 +24,10 @@ export class BlockchainService {
     const oracleAddress = process.env.ORACLE_CONTRACT_ADDRESS;
     
     // Only create contracts if addresses are provided
-    if (pawnAddress && usdtAddress && this.wallet) {
-      this.pawnContract = new Contract(pawnAddress, PawnSystemABI, this.wallet);
-      this.usdtContract = new Contract(usdtAddress, MockUSDTABI, this.wallet);
-    }
+        if (pawnAddress && usdtAddress && this.wallet) {
+          this.pawnContract = new Contract(pawnAddress, PawnSystemABI, this.wallet);
+          this.usdtContract = new Contract(usdtAddress, MockUSDTABI, this.wallet);
+        }
     
     // Create oracle contract (read-only, no wallet needed)
     if (oracleAddress) {

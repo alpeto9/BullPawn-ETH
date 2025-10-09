@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import { Provider, Contract } from 'zksync-web3';
 
-// Contract ABIs - using the same ABI as backend
+// Contract ABIs - using PawnSystem (working contract)
 const PawnSystemABI = [
   {
     "inputs": [
@@ -141,7 +141,7 @@ const PawnSystemABI = [
           {"internalType": "bool", "name": "isActive", "type": "bool"},
           {"internalType": "bool", "name": "isLiquidated", "type": "bool"}
         ],
-        "internalType": "struct PawnSystem.PawnPosition",
+        "internalType": "struct SimplePawnSystem.PawnPosition",
         "name": "",
         "type": "tuple"
       }
@@ -222,8 +222,8 @@ const MockPriceFeedABI = [
 
 // Contract addresses - from environment variables
 const CONTRACT_ADDRESSES = {
-  PAWN_SYSTEM: process.env.REACT_APP_PAWN_CONTRACT_ADDRESS || '0x386ab82DF4Fb449cF16f9a42E13e7Bc25Cfe0010',
-  MOCK_USDT: process.env.REACT_APP_USDT_CONTRACT_ADDRESS || '0x0b491BBbe8D998a1ed986daf539DE3D765626e68',
+  PAWN_SYSTEM: process.env.REACT_APP_PAWN_CONTRACT_ADDRESS || '0xAc1415613608a3a55B727B502Fab768bEf089413',
+  MOCK_USDT: process.env.REACT_APP_USDT_CONTRACT_ADDRESS || '0xEBD6A562FEb1dFf4a0bf606bdf8D9cd56480d473',
   MOCK_PRICE_FEED: process.env.REACT_APP_ETH_PRICE_FEED_ADDRESS || '0xaC92601017E3F753Ea7bE9De64fcC786c8FB0230'
 };
 
@@ -331,7 +331,7 @@ export class FrontendBlockchainService {
       }
 
       // Check allowance
-      const currentAllowance = await this.usdtContract.allowance(userAddress, CONTRACT_ADDRESSES.PAWN_SYSTEM);
+        const currentAllowance = await this.usdtContract.allowance(userAddress, CONTRACT_ADDRESSES.PAWN_SYSTEM);
       console.log('Current allowance:', ethers.utils.formatUnits(currentAllowance, 6));
 
       if (currentAllowance.lt(repaymentAmount)) {
