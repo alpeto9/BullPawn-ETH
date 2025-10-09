@@ -1,6 +1,6 @@
 import { Provider, Wallet, Contract, utils } from 'zksync-web3';
 import { ethers } from 'ethers';
-const PawnSystemABI = require('../abis/PawnSystem.json');
+const PawnSystemABI = require('../abis/PawnSystem.json').abi;
 const MockUSDTABI = require('../abis/MockUSDT.json');
 const ChainlinkPriceFeedABI = require('../abis/ChainlinkPriceFeed.json').abi;
 
