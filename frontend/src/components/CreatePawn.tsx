@@ -79,9 +79,7 @@ const CreatePawn: React.FC = () => {
       const blockchainService = new FrontendBlockchainService(provider, zkProvider);
       
       // Create the pawn position using user's wallet
-      const ethValue = parseFloat(ethAmount) * ethPrice;
-      const loanAmount = (ethValue * 70) / 100; // 70% LTV
-      const result = await blockchainService.createPawn(loanAmount, ethValue);
+      const result = await blockchainService.createPawn(parseFloat(ethAmount));
 
       setSuccess(`Pawn position created successfully! Transaction: ${result}`);
       setEthAmount('');

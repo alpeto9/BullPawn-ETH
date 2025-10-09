@@ -134,9 +134,15 @@ export class FrontendBlockchainService {
     }
   }
 
-  async createPawn(amount: number, collateralValue: number): Promise<string> {
+  async createPawn(ethAmount: number): Promise<string> {
     try {
-      const tx = await this.pawnContract.createPawn(amount, collateralValue);
+      // Convert ETH amount to wei
+      const ethValue = ethers.utils.parseEther(ethAmount.toString());
+      
+      // Call createPawn with ETH value (payable function)
+      const tx = await this.pawnContract.createPawn({
+        value: ethValue
+      });
       await tx.wait();
       return tx.hash;
     } catch (error) {
